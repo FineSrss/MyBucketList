@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="20dp">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/dialog_image_view"
+            android:layout_width="70dp"
+            android:layout_height="70dp"
+            android:layout_marginTop="10dp"
+            android:layout_gravity="center"
+            android:src="@drawable/intro"
+            android:scaleType="fitXY"/>
+
+        <Button
+            android:id="@+id/dialog_select_imagebtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="이미지 등록"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <Spinner
+            android:id="@+id/dialog_select_category"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:prompt="[카테고리 선택]"/>
+
+        <EditText
+            android:id="@+id/dialog_edit_bucket_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="버킷 타이틀"/>
+
+        <EditText
+            android:id="@+id/dialog_edit_bucket_price"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="가격"
+            android:visibility="invisible"/>
+    </LinearLayout>
+
+</LinearLayout>
