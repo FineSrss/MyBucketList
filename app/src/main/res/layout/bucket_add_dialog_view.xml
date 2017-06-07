@@ -37,7 +37,7 @@
             android:id="@+id/dialog_select_category"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:prompt="[카테고리 선택]"/>
+            android:prompt="@string/spinner_prompt"/>
 
         <EditText
             android:id="@+id/dialog_edit_bucket_title"
