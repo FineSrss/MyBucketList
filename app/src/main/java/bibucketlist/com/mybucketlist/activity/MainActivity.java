@@ -1,6 +1,10 @@
 package bibucketlist.com.mybucketlist.activity;
 
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.TabLayout;
@@ -8,23 +12,26 @@ import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.Toast;
+
+import java.io.File;
 
 import bibucketlist.com.mybucketlist.R;
 import bibucketlist.com.mybucketlist.RealmBaseActivity;
 import bibucketlist.com.mybucketlist.adapter.TabPagerAdapter;
 import bibucketlist.com.mybucketlist.dialog.NewBucketDialog;
-import io.realm.Realm;
 
 public class MainActivity extends RealmBaseActivity implements NavigationView.OnNavigationItemSelectedListener{
 
     private ViewPager viewPager;
     private long pressTime = 0;
-    private Realm realm;
+    NewBucketDialog newBucketDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,12 +83,6 @@ public class MainActivity extends RealmBaseActivity implements NavigationView.On
             @Override
             public void onTabReselected(TabLayout.Tab tab) { }
         });
-
-        //realm = Realm.getInstance(getRealmConfig());
-        /*RealmResults<Bucket> buckets = realm.where(Bucket.class).findAllSorted("bucketNum", Sort.ASCENDING);
-        BucketRealmAdapter bucketRealmAdapter = new BucketRealmAdapter(this, buckets, true, true);
-        RealmRecyclerView realmRecyclerView = (RealmRecyclerView) findViewById(R.id.realm_recycler_view);
-        realmRecyclerView.setAdapter(bucketRealmAdapter);*/
     }
 
     @Override
@@ -114,7 +115,7 @@ public class MainActivity extends RealmBaseActivity implements NavigationView.On
 
         //버킷리스트 등록 다이얼로그 생성
         if(id == R.id.newBucket){
-            NewBucketDialog newBucketDialog = new NewBucketDialog(MainActivity.this);
+            newBucketDialog = new NewBucketDialog(MainActivity.this);
             newBucketDialog.buildAndShowInputBucketDialog();
             return true;
         }
@@ -130,4 +131,55 @@ public class MainActivity extends RealmBaseActivity implements NavigationView.On
         int id = item.getItemId();
         return false;
     }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        final int PICK_FROM_ALBUM = 0;
+        final int CROP_FROM_IMAGE = 1;
+
+        Uri imgUri = null;
+        ImageView bucketImage = newBucketDialog.getBucketImage();
+        Log.d("TAG", "new bucket, onActivityResult call!1");
+
+        if(resultCode != RESULT_OK) return;
+
+        switch (requestCode){
+            case PICK_FROM_ALBUM:
+                Log.d("TAG", "new bucket, PICK_FROM_ALBUMM");
+                imgUri = data.getData();
+                Intent intent = new Intent("com.android.camera.action.CROP");
+                intent.setDataAndType(imgUri, "image/*");
+
+                intent.putExtra("outputX", 200);
+                intent.putExtra("outputY", 200);
+                intent.putExtra("aspectX", 1);
+                intent.putExtra("aspectY", 1);
+                intent.putExtra("scale", true);
+                intent.putExtra("return-data", true);
+                startActivityForResult(intent, CROP_FROM_IMAGE);
+                break;
+            case CROP_FROM_IMAGE:
+                if(resultCode != RESULT_OK) return;
+
+                final Bundle extras = data.getExtras();
+
+                String filePath = Environment.getExternalStorageDirectory().getAbsolutePath() +
+                        "/bucketImage/" + System.currentTimeMillis() + ".jpg";
+
+                if(extras != null){
+                    Bitmap photo = extras.getParcelable("data");
+                    bucketImage.setImageBitmap(photo);
+                    newBucketDialog.storeCropImage(photo, filePath);
+                    break;
+                }
+
+                File f = new File(imgUri.getPath());
+                if(f.exists())
+                    f.delete();
+
+                break;
+        }
+    }
+
 }

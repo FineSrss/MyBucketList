@@ -8,7 +8,6 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.icu.text.SimpleDateFormat;
 import android.net.Uri;
-import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v7.app.AlertDialog;
@@ -38,18 +37,13 @@ import io.realm.Realm;
 
 public class NewBucketDialog extends AppCompatActivity {
     private static final int PICK_FROM_ALBUM = 0;
-    private static final int CROP_FROM_IMAGE = 1;
     private Context mContext;
     private ImageView bucketImage;
-    private Uri imgUri;
-    private String absolutePath;
     private Realm realm;
-
 
     public NewBucketDialog(Context context)
     {
         this.mContext = context;
-        Log.d("TAG", "[mk] called!!");
         realm = Realm.getDefaultInstance();
     }
 
@@ -93,10 +87,8 @@ public class NewBucketDialog extends AppCompatActivity {
                 Intent intent = new Intent(Intent.ACTION_PICK);
                 intent.setType(MediaStore.Images.Media.CONTENT_TYPE);
                 Log.d("TAG", "imgSelectBtn Onclick");
-                //startActivityForResult(intent, PICK_FROM_ALBUM);
-
-                //Activity activity = (Activity) mContext;
                 ((Activity) mContext).startActivityForResult(intent, PICK_FROM_ALBUM);
+
             }
         });
 
@@ -121,52 +113,8 @@ public class NewBucketDialog extends AppCompatActivity {
 
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        Log.d("TAG", "new bucket, onActivityResult call!1");
 
-        if(resultCode != RESULT_OK) return;
-
-        switch (requestCode){
-            case PICK_FROM_ALBUM:
-                imgUri = data.getData();
-                Intent intent = new Intent("com.android.camera.action.CROP");
-                intent.setDataAndType(imgUri, "image/*");
-
-                intent.putExtra("outputX", 200);
-                intent.putExtra("outputY", 200);
-                intent.putExtra("aspectX", 1);
-                intent.putExtra("aspectY", 1);
-                intent.putExtra("scale", true);
-                intent.putExtra("return-data", true);
-                ((Activity) mContext).startActivityForResult(intent, CROP_FROM_IMAGE);
-                break;
-            case CROP_FROM_IMAGE:
-                if(resultCode != RESULT_OK) return;
-
-                final Bundle extras = data.getExtras();
-
-                String filePath = Environment.getExternalStorageDirectory().getAbsolutePath() +
-                        "/bucketImage/" + System.currentTimeMillis() + ".jpg";
-
-                if(extras != null){
-                    Bitmap photo = extras.getParcelable("data");
-                    bucketImage.setImageBitmap(photo);
-                    storeCropImage(photo, filePath);
-                    absolutePath = filePath;
-                    break;
-                }
-
-                File f = new File(imgUri.getPath());
-                if(f.exists())
-                    f.delete();
-
-                break;
-        }
-    }
-
-    private void storeCropImage(Bitmap bitmap, String filePath){
+    public void storeCropImage(Bitmap bitmap, String filePath){
         String dirPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/bucketImage";
         File directory_bucketImage = new File(dirPath);
 
@@ -214,98 +162,8 @@ public class NewBucketDialog extends AppCompatActivity {
         realm.commitTransaction();
     }
 
-    /*Context context;
-    private static final int PICK_PROM_ALBUM = 0;
-    AlertDialog.Builder mBuilder;
-    LayoutInflater inflater;
-    View mView;
-    Spinner mSpinner;
-    EditText bucketTitle;
-    EditText bucketPrice;
-    ImageView bucketImg;
 
-    public NewBucketDialog(Context context){
-        this.context = context;
+    public ImageView getBucketImage() {
+        return bucketImage;
     }
-
-    public void createBucketDialog(){
-        mBuilder = new AlertDialog.Builder(context);
-        inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        mView = inflater.inflate(R.layout.list_item_dialog, null);
-
-        mSpinner = (Spinner) mView.findViewById(R.id.selectCategories);
-        bucketTitle = (EditText) mView.findViewById(R.id.titleText);
-        bucketPrice = (EditText) mView.findViewById(R.id.priceText);
-        bucketImg = (ImageView) mView.findViewById(R.id.bucketImage);
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(context, android.R.layout.simple_spinner_item, context.getResources().getStringArray(R.array.categories));
-
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        mSpinner.setAdapter(adapter);
-        Button addImageBtn = (Button) mView.findViewById(R.id.addImage);
-        Button saveBtn = (Button) mView.findViewById(R.id.saveBucketBtn);
-        Button cancelBtn = (Button) mView.findViewById(R.id.cancelBucketBtn);
-        ImageView bucketImg = (ImageView) mView.findViewById(R.id.bucketImage);
-
-        mBuilder.setView(mView);
-        final AlertDialog dialog = mBuilder.create();
-        dialog.show();
-
-
-        mSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(){
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if(position == 1)
-                    bucketPrice.setVisibility(View.INVISIBLE);
-                else if(position == 2)
-                    bucketPrice.setVisibility(View.VISIBLE);
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
-            }
-        });
-
-        addImageBtn.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v) {
-                showFileChooser();
-            }
-        });
-        cancelBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-            }
-        });
-    }
-
-    private void showFileChooser(){
-        Intent intent = new Intent(Intent.ACTION_PICK);
-        intent.setType(MediaStore.Images.Media.CONTENT_TYPE);
-        //intent.addCategory(Intent.CATEGORY_OPENABLE);
-
-        try{
-             startActivityForResult(intent, PICK_PROM_ALBUM);
-        } catch(android.content.ActivityNotFoundException ex){
-            Toast.makeText(this, "Please install a File Manager", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data){
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if(resultCode == RESULT_OK) {
-            return;
-        }
-        switch (requestCode)
-        {
-            case PICK_PROM_ALBUM:
-                Uri uri = data.getData();
-                bucketImg.setImageURI(uri);
-                break;
-        }
-
-    }*/
 }
